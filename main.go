@@ -1,0 +1,47 @@
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/gofiber/fiber/v2"
+
+	language "cloud.google.com/go/language/apiv1"
+	languagepb "google.golang.org/genproto/googleapis/cloud/language/v1"
+)
+
+func main() {
+	app := fiber.New()
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		fmt.Println("Processing GET on /")
+		return c.SendString("Hello, World!")
+	})
+
+	app.Get("/sentiment", func(c *fiber.Ctx) error {
+		fmt.Println("Processing GET on /sentiment")
+		client, _ := language.NewClient(c.Context())
+		result, err := analyzeSentiment(c.Context(), client, "What a wonderful world!")
+
+		client.Close()
+		if err != nil {
+			return c.SendStatus(500)
+		}
+
+		fmt.Println("Returning result:", result.String())
+		return c.SendString(result.String())
+	})
+
+	app.Listen(":3000")
+}
+
+func analyzeSentiment(ctx context.Context, client *language.Client, text string) (*languagepb.AnalyzeSentimentResponse, error) {
+	return client.AnalyzeSentiment(ctx, &languagepb.AnalyzeSentimentRequest{
+		Document: &languagepb.Document{
+			Source: &languagepb.Document_Content{
+				Content: text,
+			},
+			Type: languagepb.Document_PLAIN_TEXT,
+		},
+	})
+}
