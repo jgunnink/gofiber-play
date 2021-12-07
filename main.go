@@ -16,9 +16,14 @@ func main() {
 	app.Static("/", "./index.html")
 
 	app.Post("/sentiment", func(c *fiber.Ctx) error {
-		fmt.Println("Processing POST on /sentiment, with text:", c.FormValue("sentimentInput"))
+		fmt.Println("Processing POST on /sentiment")
+		input := c.FormValue("sentimentInput")
+		if input == "" {
+			c.SendString("Empty input")
+			return c.SendStatus(400)
+		}
 		client, _ := language.NewClient(c.Context())
-		result, err := analyzeSentiment(c.Context(), client, c.FormValue("sentimentInput"))
+		result, err := analyzeSentiment(c.Context(), client, input)
 
 		client.Close()
 		if err != nil {
@@ -26,7 +31,7 @@ func main() {
 			return c.SendStatus(500)
 		}
 
-		fmt.Println("Returning result:", result.String())
+		fmt.Println("Finished processing.")
 		return c.SendString(result.String())
 	})
 
