@@ -13,15 +13,12 @@ import (
 func main() {
 	app := fiber.New()
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		fmt.Println("Processing GET on /")
-		return c.SendString("Hello, World!")
-	})
+	app.Static("/", "./index.html")
 
-	app.Get("/sentiment", func(c *fiber.Ctx) error {
-		fmt.Println("Processing GET on /sentiment")
+	app.Post("/sentiment", func(c *fiber.Ctx) error {
+		fmt.Println("Processing GET on /sentiment, with text:", c.FormValue("sentimentInput"))
 		client, _ := language.NewClient(c.Context())
-		result, err := analyzeSentiment(c.Context(), client, "What a wonderful world!")
+		result, err := analyzeSentiment(c.Context(), client, c.FormValue("sentimentInput"))
 
 		client.Close()
 		if err != nil {
